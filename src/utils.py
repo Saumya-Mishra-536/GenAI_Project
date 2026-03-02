@@ -2,7 +2,7 @@ import streamlit as st
 
 def apply_terminal_theme():
     """
-    Injects custom CSS for a high-tech dark UI with animations.
+    Injects custom CSS for a high-tech dark UI with a focus on data readability.
     """
     st.markdown("""
         <style>
@@ -12,16 +12,21 @@ def apply_terminal_theme():
             color: #e0e0e0;
         }
 
-        /* Sidebar Styling */
+        /* Sidebar and Container Styling */
         section[data-testid="stSidebar"] {
             background-color: #0a0a0a;
             border-right: 1px solid #1f1f1f;
         }
+        
+        div[data-testid="stExpander"] {
+            background-color: #0a0a0a;
+            border: 1px solid #1f1f1f;
+        }
 
-        /* Pulsing Neon Button Animation */
+        /* High-Tech Button Styling */
         @keyframes pulse-glow {
             0% { border-color: #00f2ff; box-shadow: 0 0 5px #00f2ff; }
-            50% { border-color: #00f2ff; box-shadow: 0 0 20px #00f2ff; }
+            50% { border-color: #00f2ff; box-shadow: 0 0 15px #00f2ff; }
             100% { border-color: #00f2ff; box-shadow: 0 0 5px #00f2ff; }
         }
 
@@ -29,12 +34,12 @@ def apply_terminal_theme():
             width: 100%;
             background-color: transparent !important;
             color: #00f2ff !important;
-            border: 2px solid #00f2ff !important;
-            border-radius: 8px !important;
+            border: 1px solid #00f2ff !important;
+            border-radius: 4px !important;
             font-family: 'Courier New', monospace !important;
-            font-weight: bold !important;
-            animation: pulse-glow 2s infinite;
-            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: pulse-glow 3s infinite;
         }
 
         .stButton>button:hover {
@@ -42,24 +47,37 @@ def apply_terminal_theme():
             color: #000000 !important;
         }
 
-        /* Terminal Text Styling */
-        .terminal-text {
-            color: #00ff41;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.9rem;
-            padding: 5px;
+        /* File Uploader Customization */
+        div[data-testid="stFileUploader"] {
+            border: 1px dashed #333;
+            background-color: #0a0a0a;
+            padding: 1rem;
+            border-radius: 5px;
         }
 
-        /* Card Styling for metrics */
+        /* Terminal Log Styling */
+        .terminal-text {
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            margin: 0;
+            line-height: 1.4;
+        }
+
+        /* Metric and Dataframe Styling */
         div[data-testid="stMetricValue"] {
             color: #00f2ff !important;
             font-family: 'Courier New', monospace;
+        }
+        
+        .stDataFrame {
+            border: 1px solid #1f1f1f;
         }
         </style>
         """, unsafe_allow_html=True)
 
 def print_terminal_log(message):
     """
-    Renders a message in the Matrix-green terminal style.
+    Outputs system status updates in a professional terminal format.
     """
-    st.markdown(f'<p class="terminal-text">> {message}</p>', unsafe_allow_html=True)
+    st.markdown(f'<p class="terminal-text">[SYSTEM]: {message}</p>', unsafe_allow_html=True)
