@@ -4,7 +4,13 @@
 
 I've prepared your project for production deployment with the following comprehensive documentation:
 
-### 1. **DEPLOYMENT_GUIDE.md** 📚
+### 1. **VERCEL_BUILD_FIX.md** 🔧 **CRITICAL**
+   - Fix for "Could not resolve entry module index.html" error
+   - Solution already applied
+   - Verification steps
+   - ~150 lines of detailed explanation
+
+### 2. **DEPLOYMENT_SUMMARY.md** 📚
    - Complete step-by-step instructions for both platforms
    - Environment variable configuration
    - CORS setup

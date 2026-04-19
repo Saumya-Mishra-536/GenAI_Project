@@ -97,9 +97,14 @@ curl http://localhost:8000/api/health
 ```bash
 cd End_sem/frontend
 
+# Verify index.html exists (CRITICAL for Vite)
+ls -la index.html  # Should show the file exists
+
 # Install Node dependencies
 npm install
 ```
+
+**⚠️ IMPORTANT:** If `index.html` is missing, see [VERCEL_BUILD_FIX.md](../VERCEL_BUILD_FIX.md)
 
 ### 3.2 Run Vite Dev Server
 

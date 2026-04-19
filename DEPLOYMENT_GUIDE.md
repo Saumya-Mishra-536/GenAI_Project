@@ -45,7 +45,20 @@ VITE_API_URL=https://your-backend-url.onrender.com/api
 
 **⚠️ Important:** Replace `your-backend-url.onrender.com` with your actual Render backend URL (we'll create this in Part 2).
 
-#### Step 3: Verify Build Locally
+#### Step 3: Verify index.html Exists
+
+**CRITICAL:** Vite requires an `index.html` file in the frontend root directory. This file should exist at `End_sem/frontend/index.html`.
+
+```bash
+# Verify the file exists
+ls -la End_sem/frontend/index.html
+
+# If it doesn't exist, it will be created automatically
+# But you can also verify with:
+cat End_sem/frontend/index.html | head -5
+```
+
+#### Step 4: Verify Build Locally
 
 ```bash
 cd End_sem/frontend
@@ -61,6 +74,9 @@ vite v5.4.21 building for production...
 dist/index.html                     0.46 kB │ gzip:  0.28 kB
 dist/assets/index-xxxxx.js       150.23 kB │ gzip: 45.32 kB
 ```
+
+**If you get an error like "Could not resolve entry module index.html":**
+- See [VERCEL_BUILD_FIX.md](VERCEL_BUILD_FIX.md) for the solution
 
 ### 1.3 Deploy to Vercel
 
