@@ -224,9 +224,15 @@ async def batch_predict(file: UploadFile = File(...)):
                 X = df[feature_columns].copy()
                 logger.info("Using all required feature columns from input")
             else:
-                # Create a basic feature set from available columns with defaults
+                # Create a feature set from available columns with defaults for missing ones
                 logger.warning(f"Missing some feature columns. Available: {list(df.columns)}, Expected: {feature_columns}")
-                X = pd.DataFrame({col: df.get(col, 0.0) for col in feature_columns})
+                X = pd.DataFrame()
+                for col in feature_columns:
+                    if col in df.columns:
+                        X[col] = df[col].values
+                    else:
+                        X[col] = 0.0
+                logger.info(f"Created feature matrix with {len(X.columns)} columns, filled missing with 0.0")
             
             # Handle NaN values
             X = X.fillna(0)
