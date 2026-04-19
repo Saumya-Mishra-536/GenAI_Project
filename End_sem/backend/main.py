@@ -31,7 +31,7 @@ app = FastAPI(
     version="2.0.0",
 )
 
-# CORS Middleware - Get allowed origins from env or use defaults
+# CORS Middleware - Must be added BEFORE routes
 FRONTEND_URL = os.getenv("FRONTEND_URL", "").strip()
 ALLOWED_ORIGINS = [
     "http://localhost:3000",                  # Local React dev
@@ -43,14 +43,16 @@ ALLOWED_ORIGINS = [
 if FRONTEND_URL:
     ALLOWED_ORIGINS.insert(0, FRONTEND_URL)
 
-logger.info(f"CORS Allowed Origins: {ALLOWED_ORIGINS}")
+logger.info(f"🔓 CORS Allowed Origins: {ALLOWED_ORIGINS}")
 
+# Add CORS middleware FIRST before all routes
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_methods=["*"],  # Allow all methods
+    allow_headers=["*"],  # Allow all headers
+    expose_headers=["*"],
     max_age=3600,
 )
 
@@ -277,15 +279,17 @@ async def batch_predict(file: UploadFile = File(...)):
             result = {
                 "file_name": file.filename,
                 "total_records": len(df),
-                "predictions": predictions,
-                "actuals": actuals,
+                "predictions": [float(p) if not (isinstance(p, float) and (p != p or p == float('inf') or p == float('-inf'))) else 0.0 for p in predictions],
+                "actuals": [float(a) if not (isinstance(a, float) and (a != a or a == float('inf') or a == float('-inf'))) else None for a in actuals] if actuals else None,
                 "hours": hours,
-                "r2_score": r2_score,
-                "mae": mae,
+                "r2_score": float(r2_score) if r2_score is not None and not (isinstance(r2_score, float) and (r2_score != r2_score or r2_score == float('inf') or r2_score == float('-inf'))) else None,
+                "mae": float(mae) if mae is not None and not (isinstance(mae, float) and (mae != mae or mae == float('inf') or mae == float('-inf'))) else None,
                 "has_labels": has_target,
                 "processing_time_seconds": 0,
                 "status": "completed",
             }
+            
+            logger.info(f"Result prepared: R²={result['r2_score']}, MAE={result['mae']}")
             
             # Save to cache for future requests with the same file
             try:
@@ -294,7 +298,7 @@ async def batch_predict(file: UploadFile = File(...)):
             except Exception as cache_err:
                 logger.warning(f"Could not cache result: {cache_err}")
             
-            logger.info(f"Batch processing completed: {len(df)} records, R²={r2_score}")
+            logger.info(f"Batch processing completed: {len(df)} records")
             return result
         
         except HTTPException:

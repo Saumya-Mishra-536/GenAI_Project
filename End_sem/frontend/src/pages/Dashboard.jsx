@@ -396,7 +396,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/25 text-center">
             <p className="text-cyan-300 font-semibold text-2xl tabular-nums">
-              {summary?.total_records?.toLocaleString?.() || '0'}
+              {summary?.total_records ? Number(summary.total_records).toLocaleString() : '0'}
             </p>
             <p className="text-zinc-500 text-xs mt-1">Records processed</p>
           </div>
