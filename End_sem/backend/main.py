@@ -151,7 +151,7 @@ async def batch_predict(file: UploadFile = File(...)):
         
         import io
         import pandas as pd
-        from ml.predictor import load_model, get_feature_columns
+        import traceback
         
         # Read file content
         contents = await file.read()
@@ -159,38 +159,48 @@ async def batch_predict(file: UploadFile = File(...)):
         try:
             # Try reading CSV first
             df = pd.read_csv(io.BytesIO(contents))
-        except:
+        except Exception as csv_error:
             # Try reading Excel if CSV fails
             try:
                 df = pd.read_excel(io.BytesIO(contents))
-            except Exception as e:
-                raise HTTPException(status_code=400, detail=f"Failed to read file: {str(e)}")
+            except Exception as excel_error:
+                logger.error(f"Failed to read file as CSV or Excel: {csv_error}, {excel_error}")
+                raise HTTPException(status_code=400, detail="Failed to read file. Please upload a valid CSV or Excel file.")
         
         if df.empty:
             raise HTTPException(status_code=400, detail="File is empty")
         
+        logger.info(f"Successfully read file with {len(df)} rows and columns: {list(df.columns)}")
+        
         # Load model and make predictions
         try:
+            from ml.predictor import load_model, get_feature_columns
+            
+            logger.info("Loading model...")
             estimator, scaler = load_model()
             feature_columns = get_feature_columns()
+            logger.info(f"Model loaded. Feature columns: {feature_columns}")
             
             # Check if we have required features or labels
             has_target = 'Demand_kW' in df.columns
             
             # Prepare features - if we have the required columns, use them; otherwise use sample features
             if all(col in df.columns for col in feature_columns):
-                X = df[feature_columns]
+                X = df[feature_columns].copy()
+                logger.info("Using all required feature columns from input")
             else:
-                # Try to infer features or use placeholder
-                logger.warning(f"Missing some feature columns. Expected: {feature_columns}")
-                # Create a basic feature set from available columns
-                X = pd.DataFrame({col: df.get(col, 0) for col in feature_columns})
+                # Create a basic feature set from available columns with defaults
+                logger.warning(f"Missing some feature columns. Available: {list(df.columns)}, Expected: {feature_columns}")
+                X = pd.DataFrame({col: df.get(col, 0.0) for col in feature_columns})
             
             # Handle NaN values
             X = X.fillna(0)
+            logger.info(f"Features prepared. Shape: {X.shape}")
             
             # Make predictions
+            logger.info("Making predictions...")
             predictions = estimator.predict(X).tolist()
+            logger.info(f"Predictions completed. Count: {len(predictions)}")
             
             # Calculate metrics if we have actual values
             r2_score = None
@@ -198,18 +208,22 @@ async def batch_predict(file: UploadFile = File(...)):
             actuals = None
             
             if has_target:
-                from sklearn.metrics import r2_score as sk_r2, mean_absolute_error
-                actuals = df['Demand_kW'].values.tolist()
                 try:
+                    from sklearn.metrics import r2_score as sk_r2, mean_absolute_error
+                    actuals = df['Demand_kW'].values.tolist()
                     r2_score = float(sk_r2(actuals, predictions))
                     mae = float(mean_absolute_error(actuals, predictions))
-                except:
-                    logger.warning("Could not calculate R² or MAE")
+                    logger.info(f"Metrics calculated: R²={r2_score}, MAE={mae}")
+                except Exception as metric_error:
+                    logger.warning(f"Could not calculate metrics: {metric_error}")
             
             # Extract hours if available
             hours = None
             if 'Hour' in df.columns:
-                hours = df['Hour'].astype(int).tolist()
+                try:
+                    hours = df['Hour'].astype(int).tolist()
+                except:
+                    hours = list(range(len(predictions)))
             else:
                 hours = list(range(len(predictions)))
             
@@ -229,15 +243,19 @@ async def batch_predict(file: UploadFile = File(...)):
             logger.info(f"Batch processing completed: {len(df)} records, R²={r2_score}")
             return result
         
+        except HTTPException:
+            raise
         except Exception as e:
-            logger.error(f"Prediction error: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
+            error_trace = traceback.format_exc()
+            logger.error(f"Prediction error: {str(e)}\n{error_trace}")
+            raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
     
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Batch processing error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        error_trace = traceback.format_exc()
+        logger.error(f"Batch processing error: {str(e)}\n{error_trace}")
+        raise HTTPException(status_code=500, detail=f"Batch processing failed: {str(e)}")
 
 
 # ──────────────────────────────────────
