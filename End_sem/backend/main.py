@@ -443,20 +443,42 @@ async def startup_event():
     logger.info("🚀 Backend startup - Loading models and initializing services")
     
     try:
-        # TODO: Load your ML models here
-        # from ml.predictor import load_model
-        # load_model()
+        # Load ML models with automatic rebuild on version mismatch
+        from ml.predictor import load_model, ensure_model_trained, _bundle_path
         
-        # TODO: Initialize FAISS vector database
-        # from agent.utils.vector_store import initialize_vector_store
-        # initialize_vector_store()
+        bundle_path = _bundle_path()
+        model_exists = os.path.isfile(bundle_path)
+        
+        if not model_exists:
+            logger.warning("⚠️ Model bundle not found. Training from scratch...")
+            ensure_model_trained()
+            logger.info("✅ Model trained and saved")
+        
+        # Try to load the model
+        try:
+            estimator, scaler = load_model()
+            logger.info("✅ Model loaded successfully")
+        except AttributeError as ae:
+            # Handle sklearn version mismatch
+            if "sklearn" in str(ae) or "__pyx_unpickle" in str(ae):
+                logger.warning(f"⚠️ scikit-learn version mismatch: {ae}")
+                logger.info("🔄 Rebuilding model to match current sklearn version...")
+                if os.path.isfile(bundle_path):
+                    os.remove(bundle_path)
+                    logger.info(f"Deleted incompatible model bundle")
+                ensure_model_trained()
+                estimator, scaler = load_model()
+                logger.info("✅ Model rebuilt and loaded successfully")
+            else:
+                raise
         
         logger.info("✅ All services initialized successfully")
     
     except Exception as e:
         logger.error(f"❌ Startup error: {str(e)}")
-        # Don't crash the service, log and continue
-        # Models can be loaded on-demand
+        import traceback
+        logger.error(traceback.format_exc())
+        # Don't crash the service, models can be loaded on-demand
 
 
 @app.on_event("shutdown")
