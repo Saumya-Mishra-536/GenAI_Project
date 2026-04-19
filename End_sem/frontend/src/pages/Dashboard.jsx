@@ -99,7 +99,7 @@ const Dashboard = () => {
       try {
         const result = await getSampleData();
         setData(result);
-      // eslint-disable-next-line no-unused-vars
+        // eslint-disable-next-line no-unused-vars
       } catch (err) {
         setError('Failed to connect to the API. Start the backend server and try again.');
       } finally {
@@ -154,10 +154,6 @@ const Dashboard = () => {
   }, [data]);
 
   if (loading) return <LoadingSpinner message="Loading analytics" />;
-
-  if (!dataUploaded) {
-    return <UploadPrompt />;
-  }
 
   if (error) {
     return (

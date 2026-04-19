@@ -181,8 +181,15 @@ async def batch_predict(file: UploadFile = File(...)):
             feature_columns = get_feature_columns()
             logger.info(f"Model loaded. Feature columns: {feature_columns}")
             
-            # Check if we have required features or labels
-            has_target = 'Demand_kW' in df.columns
+            # Check if we have target labels - try multiple column name variations
+            target_column = None
+            for col_name in ['Demand_kW', 'EV Charging Demand (kW)', 'demand', 'Demand', 'demand_kw']:
+                if col_name in df.columns:
+                    target_column = col_name
+                    break
+            
+            has_target = target_column is not None
+            logger.info(f"Target column detected: {target_column if has_target else 'None'}")
             
             # Prepare features - if we have the required columns, use them; otherwise use sample features
             if all(col in df.columns for col in feature_columns):
@@ -207,25 +214,31 @@ async def batch_predict(file: UploadFile = File(...)):
             mae = None
             actuals = None
             
-            if has_target:
+            if has_target and target_column:
                 try:
                     from sklearn.metrics import r2_score as sk_r2, mean_absolute_error
-                    actuals = df['Demand_kW'].values.tolist()
+                    actuals = df[target_column].values.tolist()
                     r2_score = float(sk_r2(actuals, predictions))
                     mae = float(mean_absolute_error(actuals, predictions))
                     logger.info(f"Metrics calculated: R²={r2_score}, MAE={mae}")
                 except Exception as metric_error:
                     logger.warning(f"Could not calculate metrics: {metric_error}")
             
-            # Extract hours if available
+            # Extract hours if available - try multiple column name variations
             hours = None
-            if 'Hour' in df.columns:
-                try:
-                    hours = df['Hour'].astype(int).tolist()
-                except:
-                    hours = list(range(len(predictions)))
-            else:
+            for col_name in ['Hour', 'hour', 'Time', 'time', 'Hour_of_Day', 'hour_of_day']:
+                if col_name in df.columns:
+                    try:
+                        hours = df[col_name].astype(int).tolist()
+                        logger.info(f"Extracted hour data from column: {col_name}")
+                        break
+                    except:
+                        pass
+            
+            if hours is None:
+                # Fallback to sequential index if no hour column found
                 hours = list(range(len(predictions)))
+                logger.info("Using sequential index as hour data")
             
             result = {
                 "file_name": file.filename,
@@ -328,36 +341,47 @@ async def run_planning_agent():
 
 @app.get("/api/data/sample")
 async def get_sample_data():
-    """Get sample charging station data for testing"""
+    """Get sample charging station data for dashboard"""
     try:
+        # Generate sample hourly demand data (24 hours)
+        hourly_demand = [
+            {"hour": i, "demand": 10 + 8 * (1 + 0.5 * ((i - 12) ** 2 / 144)) + (2 if i % 2 == 0 else -1)}
+            for i in range(24)
+        ]
+        
+        # Sample day of week data
+        day_of_week = [
+            {"day": "Mon", "demand": 85.2},
+            {"day": "Tue", "demand": 87.5},
+            {"day": "Wed", "demand": 89.1},
+            {"day": "Thu", "demand": 86.8},
+            {"day": "Fri", "demand": 92.3},
+            {"day": "Sat", "demand": 78.4},
+            {"day": "Sun", "demand": 72.6},
+        ]
+        
+        # Sample price vs demand correlation
+        price_vs_demand = [
+            {"price": 0.08, "demand": 12.3},
+            {"price": 0.12, "demand": 15.7},
+            {"price": 0.15, "demand": 18.2},
+            {"price": 0.18, "demand": 21.5},
+            {"price": 0.22, "demand": 25.8},
+        ]
+        
         sample_data = {
-            "stations": [
-                {
-                    "station_id": "station_a",
-                    "location": "Los Angeles, CA",
-                    "current_load_kw": 12.5,
-                    "capacity_kw": 50,
-                    "utilization_percent": 25,
-                },
-                {
-                    "station_id": "station_b",
-                    "location": "San Francisco, CA",
-                    "current_load_kw": 38.2,
-                    "capacity_kw": 50,
-                    "utilization_percent": 76,
-                },
-                {
-                    "station_id": "station_c",
-                    "location": "San Diego, CA",
-                    "current_load_kw": 45.8,
-                    "capacity_kw": 50,
-                    "utilization_percent": 92,
-                },
-            ],
+            "summary": {
+                "avg_demand": 23.4,
+                "max_demand": 35.8,
+                "total_records": 8760,  # 1 year of hourly data
+            },
+            "hourly_demand": hourly_demand,
+            "day_of_week": day_of_week,
+            "price_vs_demand": price_vs_demand,
             "metadata": {
-                "total_demand_kw": 96.5,
-                "total_capacity_kw": 150,
-                "overall_utilization": "64%",
+                "total_demand_kw": 205.1,
+                "total_capacity_kw": 500,
+                "overall_utilization": "41%",
                 "timestamp": "2026-04-20T10:00:00Z",
             },
         }
