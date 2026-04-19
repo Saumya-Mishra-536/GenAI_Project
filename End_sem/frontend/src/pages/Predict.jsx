@@ -64,9 +64,15 @@ const Predict = () => {
     setError(null);
     try {
       const res = await predictSingle(params);
-      setResult(res.prediction);
+      // Handle both response formats (prediction or predicted_demand_kw)
+      const prediction = res?.prediction ?? res?.predicted_demand_kw ?? null;
+      setResult(prediction);
+      if (!prediction && prediction !== 0) {
+        setError('No prediction value received from API');
+      }
     } catch (err) {
       setError('Inference failed. Check that the API is reachable.');
+      setResult(null);
     } finally {
       setLoading(false);
     }
@@ -188,10 +194,10 @@ const Predict = () => {
         <GlassCard className="lg:col-span-8 flex flex-col items-center justify-center min-h-[200px]" title="Predicted demand">
           <p className="text-zinc-500 text-xs font-medium uppercase tracking-wider mb-3">Target load</p>
           <div className="flex items-baseline justify-center gap-2">
-            {result !== null ? (
+            {result !== null && result !== undefined && typeof result === 'number' ? (
               <>
                 <span className="text-5xl sm:text-6xl font-bold tabular-nums bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 to-violet-400">
-                  {result.toFixed(4)}
+                  {(result).toFixed(4)}
                 </span>
                 <span className="text-xl text-zinc-500 font-medium">kW</span>
               </>
@@ -206,41 +212,49 @@ const Predict = () => {
 
         <GlassCard title="Daily profile context" className="lg:col-span-8 min-h-[340px]">
           <div className="h-full w-full min-h-[260px] relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorDemandPred" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#c084fc" stopOpacity={0.35} />
-                    <stop offset="95%" stopColor="#c084fc" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
-                <XAxis dataKey="hour" stroke="#71717a" tick={{ fill: '#a1a1aa', fontSize: 11 }} />
-                <YAxis stroke="#71717a" tick={{ fill: '#a1a1aa', fontSize: 11 }} domain={[0.05, 0.3]} />
-                <Area
-                  type="monotone"
-                  dataKey="demand"
-                  stroke="#c084fc"
-                  strokeWidth={2}
-                  fillOpacity={1}
-                  fill="url(#colorDemandPred)"
-                />
-                <ReferenceDot x={params.hour} y={currentY} r={8} fill="#22d3ee" stroke="#fff" strokeWidth={2} />
-              </AreaChart>
-            </ResponsiveContainer>
+            {chartData && chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={280}>
+                <AreaChart data={chartData} margin={{ top: 16, right: 16, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorDemandPred" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#c084fc" stopOpacity={0.35} />
+                      <stop offset="95%" stopColor="#c084fc" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                  <XAxis dataKey="hour" stroke="#71717a" tick={{ fill: '#a1a1aa', fontSize: 11 }} />
+                  <YAxis stroke="#71717a" tick={{ fill: '#a1a1aa', fontSize: 11 }} domain={[0.05, 0.3]} />
+                  <Area
+                    type="monotone"
+                    dataKey="demand"
+                    stroke="#c084fc"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorDemandPred)"
+                  />
+                  <ReferenceDot x={params.hour} y={currentY} r={8} fill="#22d3ee" stroke="#fff" strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[280px] text-zinc-500">No data</div>
+            )}
           </div>
         </GlassCard>
 
         <GlassCard title="Residual vs profile (illustrative)" className="lg:col-span-12 min-h-[280px]">
-          <div className="h-[240px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={residualData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.35} />
-                <XAxis dataKey="hour" stroke="#71717a" tick={{ fill: '#a1a1aa', fontSize: 11 }} />
-                <YAxis stroke="#71717a" tick={{ fill: '#a1a1aa', fontSize: 11 }} />
-                <Line type="monotone" dataKey="residual" stroke="#34d399" strokeWidth={2} dot={false} name="Residual" />
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="h-[240px] w-full relative">
+            {residualData && residualData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={240}>
+                <LineChart data={residualData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" opacity={0.35} />
+                  <XAxis dataKey="hour" stroke="#71717a" tick={{ fill: '#a1a1aa', fontSize: 11 }} />
+                  <YAxis stroke="#71717a" tick={{ fill: '#a1a1aa', fontSize: 11 }} />
+                  <Line type="monotone" dataKey="residual" stroke="#34d399" strokeWidth={2} dot={false} name="Residual" />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-[240px] text-zinc-500">No data</div>
+            )}
           </div>
           <p className="text-xs text-zinc-500 mt-2">
             Illustrative offset series for comparing the selected hour against the reference curve.

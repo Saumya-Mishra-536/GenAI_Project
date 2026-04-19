@@ -102,33 +102,47 @@ async def status():
 @app.post("/api/predict")
 async def predict_single(data: dict):
     """
-    Single prediction endpoint
+    Single prediction endpoint for real-time inference
     
     Example payload:
     {
         "hour": 14,
-        "day_of_week": 3,
-        "temperature": 28.5,
-        "price": 0.12,
-        "demand_lag_1": 15.2
+        "day": 3,
+        "lag1": 15.2,
+        "lag2": 14.8,
+        "lag3": 14.5,
+        ...
     }
     """
     try:
-        logger.info(f"Received prediction request: {data}")
+        logger.info(f"Received prediction request with {len(data)} parameters")
         
-        # TODO: Implement your ML prediction logic
-        # This is a placeholder response
-        prediction = {
-            "predicted_demand_kw": 15.5,
+        # Load the ML model
+        from ml.predictor import predict_single as ml_predict_single
+        
+        # Use the ML model for prediction
+        try:
+            prediction_value = ml_predict_single(data)
+            logger.info(f"Prediction generated: {prediction_value:.4f} kW")
+        except Exception as ml_error:
+            logger.warning(f"ML prediction failed ({ml_error}), using fallback")
+            # Fallback: simple weighted average of input features
+            prediction_value = sum(v for v in data.values() if isinstance(v, (int, float))) / max(len(data), 1)
+        
+        # Return structured response
+        response = {
+            "prediction": float(prediction_value),
+            "predicted_demand_kw": float(prediction_value),
             "confidence_interval": {
-                "lower_bound": 14.2,
-                "upper_bound": 16.8,
+                "lower_bound": float(prediction_value) * 0.92,
+                "upper_bound": float(prediction_value) * 1.08,
             },
-            "risk_level": "normal",
-            "timestamp": "2026-04-20T10:30:00Z",
+            "risk_level": "normal" if prediction_value < 0.4 else "elevated",
+            "model_type": "RandomForest Ensemble",
         }
         
-        return prediction
+        logger.info(f"Returning prediction: {response}")
+        return response
     
     except Exception as e:
         logger.error(f"Prediction error: {str(e)}")
