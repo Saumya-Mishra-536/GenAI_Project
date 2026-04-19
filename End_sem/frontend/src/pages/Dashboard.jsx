@@ -99,6 +99,7 @@ const Dashboard = () => {
       try {
         const result = await getSampleData();
         setData(result);
+      // eslint-disable-next-line no-unused-vars
       } catch (err) {
         setError('Failed to connect to the API. Start the backend server and try again.');
       } finally {
@@ -125,12 +126,12 @@ const Dashboard = () => {
     const { summary, hourly_demand } = data;
     const vol = hourly_demand?.length
       ? Math.min(
-          100,
-          Math.sqrt(
-            hourly_demand.reduce((s, h) => s + Math.pow(h.demand - summary.avg_demand, 2), 0) /
-              hourly_demand.length
-          ) * 400
-        )
+        100,
+        Math.sqrt(
+          hourly_demand.reduce((s, h) => s + Math.pow(h.demand - summary.avg_demand, 2), 0) /
+          hourly_demand.length
+        ) * 400
+      )
       : 40;
     const headroom = summary.max_demand > 0.4 ? 55 : 88;
     const coverage = Math.min(100, (summary.total_records / 150) * 18);

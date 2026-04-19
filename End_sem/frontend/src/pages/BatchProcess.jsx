@@ -73,9 +73,9 @@ const BatchProcess = () => {
   const errorHistogram =
     chartData.length > 0
       ? chartData.slice(0, 40).map((row, i) => ({
-          i,
-          error: Math.abs(row.actual - row.predicted),
-        }))
+        i,
+        error: Math.abs(row.actual - row.predicted),
+      }))
       : [];
 
   return (
