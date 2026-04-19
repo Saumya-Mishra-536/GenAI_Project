@@ -35,7 +35,7 @@ const AgentPlanner = () => {
     } catch (err) {
       setError(
         err.response?.data?.detail ||
-          'Agent request failed. Ensure batch data was processed and the API is running.'
+        'Agent request failed. Ensure batch data was processed and the API is running.'
       );
     } finally {
       setLoading(false);
