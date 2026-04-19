@@ -31,15 +31,23 @@ app = FastAPI(
     version="2.0.0",
 )
 
-# CORS Middleware
+# CORS Middleware - Get allowed origins from env or use defaults
+FRONTEND_URL = os.getenv("FRONTEND_URL", "").strip()
+ALLOWED_ORIGINS = [
+    "http://localhost:3000",                  # Local React dev
+    "http://localhost:5173",                  # Local Vite dev
+    "http://localhost:8501",                  # Streamlit local
+    ""
+]
+# Add frontend URL if configured
+if FRONTEND_URL:
+    ALLOWED_ORIGINS.insert(0, FRONTEND_URL)
+
+logger.info(f"CORS Allowed Origins: {ALLOWED_ORIGINS}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://genai-ev-frontend.vercel.app",  # Vercel frontend
-        "http://localhost:3000",                  # Local React dev
-        "http://localhost:5173",                  # Local Vite dev
-        "http://localhost:8501",                  # Streamlit local
-    ],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["Content-Type", "Authorization"],
