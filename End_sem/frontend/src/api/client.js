@@ -1,6 +1,14 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// Build API URL from environment or default
+let API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+
+// Ensure /api is included in the URL
+if (API_URL && !API_URL.endsWith('/api')) {
+  API_URL = `${API_URL}/api`.replace(/\/api\/api$/, '/api'); // Prevent double /api
+}
+
+console.log('[API Client] Using base URL:', API_URL);
 
 const apiClient = axios.create({
   baseURL: API_URL,
