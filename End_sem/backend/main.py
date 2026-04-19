@@ -138,10 +138,11 @@ async def predict_single(data: dict):
 @app.post("/api/batch")
 async def batch_predict(file: UploadFile = File(...)):
     """
-    Batch prediction endpoint
+    Batch prediction endpoint with caching
     
     Accepts CSV file with charging station data
     Returns predictions for all records with validation metrics
+    Cache is automatically invalidated when file content changes
     """
     try:
         logger.info(f"Received batch file: {file.filename}")
@@ -152,9 +153,22 @@ async def batch_predict(file: UploadFile = File(...)):
         import io
         import pandas as pd
         import traceback
+        from upload_cache import make_cache_key, get_cached_batch, store_batch_cache
         
         # Read file content
         contents = await file.read()
+        
+        # Create cache key based on filename + file contents (changes when file changes)
+        cache_key = make_cache_key(file.filename, contents)
+        logger.info(f"Cache key: {cache_key}")
+        
+        # Check if we have cached results for this exact file
+        cached = get_cached_batch(cache_key)
+        if cached:
+            logger.info("✅ Returning cached result for this file")
+            return cached['response_data']
+        
+        logger.info("⚠️ Cache miss - processing file...")
         
         try:
             # Try reading CSV first
@@ -252,6 +266,13 @@ async def batch_predict(file: UploadFile = File(...)):
                 "processing_time_seconds": 0,
                 "status": "completed",
             }
+            
+            # Save to cache for future requests with the same file
+            try:
+                store_batch_cache(cache_key, result, df, ttl_seconds=3600)  # 1 hour cache
+                logger.info(f"✅ Cached result with key: {cache_key}")
+            except Exception as cache_err:
+                logger.warning(f"Could not cache result: {cache_err}")
             
             logger.info(f"Batch processing completed: {len(df)} records, R²={r2_score}")
             return result
@@ -408,6 +429,39 @@ async def check_upload_status():
     except Exception as e:
         logger.error(f"Status check error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/cache/clear")
+async def clear_cache():
+    """
+    Clear all batch processing cache
+    
+    Call this endpoint if you want to force re-processing of files
+    instead of returning cached results
+    """
+    try:
+        from upload_cache import _cache_root
+        import shutil
+        
+        cache_dir = _cache_root()
+        if os.path.isdir(cache_dir):
+            shutil.rmtree(cache_dir)
+            os.makedirs(cache_dir, exist_ok=True)
+            logger.info("✅ Cache cleared")
+            return {
+                "status": "success",
+                "message": "All cached batch results have been cleared",
+                "cache_directory": cache_dir,
+            }
+        else:
+            return {
+                "status": "success",
+                "message": "Cache directory does not exist",
+                "cache_directory": cache_dir,
+            }
+    except Exception as e:
+        logger.error(f"Cache clear error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to clear cache: {str(e)}")
 
 
 # ──────────────────────────────────────
