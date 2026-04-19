@@ -37,7 +37,7 @@ ALLOWED_ORIGINS = [
     "http://localhost:3000",                  # Local React dev
     "http://localhost:5173",                  # Local Vite dev
     "http://localhost:8501",                  # Streamlit local
-    ""
+    "http://gen-ai-project-rosy.vercel.app"
 ]
 # Add frontend URL if configured
 if FRONTEND_URL:
