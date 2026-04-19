@@ -120,7 +120,12 @@ const AgentPlanner = () => {
     );
   }
 
-  const { insights, reasoning, final_plan, retrieved_knowledge, iteration_count, simulated_impact } = data;
+  const insights = data?.insights || [];
+  const reasoning = data?.reasoning || '';
+  const final_plan = data?.final_plan || {};
+  const retrieved_knowledge = data?.retrieved_knowledge || [];
+  const iteration_count = data?.iteration_count || 0;
+  const simulated_impact = data?.simulated_impact || {};
 
   return (
     <PageMotion className="space-y-6 sm:space-y-8 page-transition pb-12 sm:pb-16">
@@ -145,19 +150,19 @@ const AgentPlanner = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
           title="Risk level"
-          value={final_plan.risk_level || 'Unknown'}
+          value={final_plan?.risk_level || 'Unknown'}
           icon={AlertTriangle}
-          color={final_plan.risk_level === 'High' ? 'orange' : 'cyan'}
+          color={final_plan?.risk_level === 'High' ? 'orange' : 'cyan'}
         />
         <StatCard
           title="Plan confidence"
-          value={`${((final_plan.confidence_score || 0) * 100).toFixed(1)}%`}
+          value={`${((final_plan?.confidence_score || 0) * 100).toFixed(1)}%`}
           icon={ShieldCheck}
-          color={final_plan.confidence_score > 0.8 ? 'green' : 'orange'}
+          color={(final_plan?.confidence_score || 0) > 0.8 ? 'green' : 'orange'}
         />
         <StatCard
           title="Optimization loops"
-          value={iteration_count?.toString() || '0'}
+          value={iteration_count?.toString?.() || '0'}
           icon={Bot}
           color="magenta"
         />
@@ -204,29 +209,11 @@ const AgentPlanner = () => {
             <div className="p-4 bg-black/40 rounded-xl border border-white/5">
               <h4 className="text-sm font-semibold text-cyan-400 mb-3 uppercase tracking-wider flex items-center gap-2">
                 <CheckCircle className="w-4 h-4" aria-hidden />
-                Observations
+                Agent reasoning
               </h4>
-              <ul className="list-disc list-inside text-sm text-zinc-300 space-y-1.5 ml-1">
-                {(reasoning.observations || []).map((o, i) => (
-                  <li key={i} className="leading-relaxed">
-                    {o}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="p-4 bg-black/40 rounded-xl border border-white/5">
-              <h4 className="text-sm font-semibold text-violet-400 mb-3 uppercase tracking-wider flex items-center gap-2">
-                <Database className="w-4 h-4" aria-hidden />
-                Inferences
-              </h4>
-              <ul className="list-disc list-inside text-sm text-zinc-300 space-y-1.5 ml-1">
-                {(reasoning.inferences || []).map((inf, i) => (
-                  <li key={i} className="leading-relaxed">
-                    {inf}
-                  </li>
-                ))}
-              </ul>
+              <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                {reasoning || 'No reasoning available'}
+              </p>
             </div>
           </div>
         </GlassCard>
@@ -235,11 +222,16 @@ const AgentPlanner = () => {
           <GlassCard title="Retrieved knowledge" className="flex-1 bg-gradient-to-b from-black/50 to-black/30 border-t border-cyan-500/20">
             <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1 custom-scrollbar">
               {(retrieved_knowledge || []).map((k, i) => (
-                <div
-                  key={i}
-                  className="pl-3 border-l-2 border-cyan-500/35 text-xs text-zinc-400 font-mono leading-relaxed"
-                >
-                  {k}
+                <div key={i} className="pl-3 border-l-2 border-cyan-500/35 text-xs text-zinc-400 font-mono leading-relaxed">
+                  {typeof k === 'string' ? (
+                    k
+                  ) : (
+                    <>
+                      <span className="text-cyan-300 font-semibold">{k.source}</span>
+                      <br />
+                      {k.content}
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -270,33 +262,43 @@ const AgentPlanner = () => {
           className="lg:col-span-12 border-violet-500/25 bg-violet-950/20"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {(final_plan.recommendations || []).map((rec, idx) => (
+            {(final_plan?.recommendations || []).map((rec, idx) => (
               <div
                 key={idx}
                 className="bg-black/50 border border-white/10 rounded-xl p-5 relative overflow-hidden group hover:border-violet-500/35 transition-colors"
               >
                 <div className="absolute top-0 right-0 px-3 py-1 bg-white/5 rounded-bl-xl text-xs font-semibold uppercase tracking-wider text-zinc-500 group-hover:bg-violet-500/15 group-hover:text-violet-200 transition-colors">
-                  {(rec.priority || 'Normal') + ' priority'}
+                  {(rec?.priority || 'Normal').toLowerCase()} priority
                 </div>
 
                 <h4 className="text-lg font-semibold text-white mb-1 flex items-center gap-2 mt-2">
                   <span className="w-7 h-7 rounded-lg bg-violet-500/20 text-violet-300 flex items-center justify-center text-xs border border-violet-500/40 font-mono">
                     {String(idx + 1).padStart(2, '0')}
                   </span>
-                  {(rec.type || 'Action').replace(/_/g, ' ')}
+                  {rec?.action || 'Infrastructure Action'}
                 </h4>
 
-                <p className="text-sm text-cyan-400/90 font-mono mb-4">{rec.location}</p>
+                {rec?.location && <p className="text-sm text-cyan-400/90 font-mono mb-4">{rec.location}</p>}
 
                 <div className="space-y-3">
-                  <div>
-                    <span className="text-xs text-zinc-500 uppercase block mb-1">Execution</span>
-                    <p className="text-sm text-zinc-200 leading-relaxed">{rec.action}</p>
-                  </div>
-                  <div className="pl-3 border-l-2 border-zinc-700">
-                    <span className="text-xs text-zinc-500 uppercase block mb-1">Justification</span>
-                    <p className="text-sm text-zinc-400 leading-relaxed">{rec.justification}</p>
-                  </div>
+                  {rec?.capacity_kw && (
+                    <div>
+                      <span className="text-xs text-zinc-500 uppercase block mb-1">Capacity</span>
+                      <p className="text-sm text-zinc-200 leading-relaxed">{rec.capacity_kw} kW</p>
+                    </div>
+                  )}
+                  {rec?.estimated_cost && (
+                    <div>
+                      <span className="text-xs text-zinc-500 uppercase block mb-1">Estimated Cost</span>
+                      <p className="text-sm text-zinc-200 leading-relaxed">${rec.estimated_cost.toLocaleString()}</p>
+                    </div>
+                  )}
+                  {rec?.implementation_timeline && (
+                    <div className="pl-3 border-l-2 border-zinc-700">
+                      <span className="text-xs text-zinc-500 uppercase block mb-1">Timeline</span>
+                      <p className="text-sm text-zinc-400 leading-relaxed">{rec.implementation_timeline}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

@@ -249,45 +249,55 @@ async def run_planning_agent():
     """
     Run the agentic infrastructure planning system
     
-    Returns:
-    {
-        "plan": {...},
-        "confidence": 0.95,
-        "recommendations": [...],
-        "reasoning": "...",
-    }
+    Returns the complete planning response with recommendations and validation
     """
     try:
         logger.info("Starting agentic planning pipeline")
         
-        # TODO: Implement agentic planning logic
-        # Import and run your LangGraph agent
-        plan = {
-            "recommendations": [
-                {
-                    "action": "Install battery storage",
-                    "location": "Station A",
-                    "capacity_kw": 50,
-                    "estimated_cost": 150000,
-                    "implementation_timeline": "Q3 2026",
-                },
-                {
-                    "action": "Implement dynamic pricing",
-                    "peak_hour_surcharge": 0.05,
-                    "expected_load_reduction": "15%",
-                    "implementation_timeline": "Q2 2026",
-                },
-            ],
-            "stress_test_results": {
-                "peak_demand_scenario": "+20%",
-                "system_resilience": "robust",
-                "failure_risk": "low",
+        # TODO: Implement agentic planning logic with actual LangGraph agent
+        # For now, return a properly structured mock response
+        response = {
+            "final_plan": {
+                "risk_level": "Medium",
+                "confidence_score": 0.92,
+                "recommendations": [
+                    {
+                        "action": "Install battery storage",
+                        "location": "Station A",
+                        "capacity_kw": 50,
+                        "estimated_cost": 150000,
+                        "implementation_timeline": "Q3 2026",
+                        "priority": "high",
+                    },
+                    {
+                        "action": "Implement dynamic pricing",
+                        "peak_hour_surcharge": 0.05,
+                        "expected_load_reduction": "15%",
+                        "implementation_timeline": "Q2 2026",
+                        "priority": "medium",
+                    },
+                ],
             },
-            "confidence_score": 0.92,
-            "validation_iterations": 2,
+            "iteration_count": 2,
+            "simulated_impact": {
+                "robustness_score": 0.87,
+                "scenario": "Peak demand +20% stress test",
+                "impact_analysis": "System remains stable under extreme load conditions with recommended infrastructure upgrades",
+            },
+            "insights": [
+                "Demand peaks occur consistently at 6-9 PM",
+                "Battery storage would reduce grid strain by ~25%",
+                "Dynamic pricing can flatten demand curve",
+            ],
+            "reasoning": "Analysis of historical patterns and stress simulation suggests a two-phase approach: immediate demand flattening via pricing, followed by long-term capacity expansion through battery storage.",
+            "retrieved_knowledge": [
+                {"source": "EV Planning Rules", "content": "Peak hour surcharges should be 15-20% above baseline"},
+                {"source": "Grid Management", "content": "Battery storage systems typically achieve 85-90% round-trip efficiency"},
+            ],
         }
         
-        return plan
+        logger.info(f"Agent planning completed with confidence {response['final_plan']['confidence_score']}")
+        return response
     
     except Exception as e:
         logger.error(f"Agent planning error: {str(e)}")
