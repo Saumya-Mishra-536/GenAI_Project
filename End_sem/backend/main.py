@@ -37,9 +37,9 @@ ALLOWED_ORIGINS = [
     "http://localhost:3000",                  # Local React dev
     "http://localhost:5173",                  # Local Vite dev
     "http://localhost:8501",                  # Streamlit local
-    "http://gen-ai-project-rosy.vercel.app"
+    "https://gen-ai-project-rosy.vercel.app"  # Current Vercel frontend (https!)
 ]
-# Add frontend URL if configured
+# Add frontend URL if configured (takes precedence)
 if FRONTEND_URL:
     ALLOWED_ORIGINS.insert(0, FRONTEND_URL)
 
