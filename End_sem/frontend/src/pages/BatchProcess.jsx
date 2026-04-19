@@ -154,24 +154,28 @@ const BatchProcess = () => {
         {result ? (
           <div className="lg:col-span-8 flex flex-col gap-6 animation-fade-in">
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-              <StatCard
-                title="Records processed"
-                value={result.total_records.toLocaleString()}
-                color="cyan"
-              />
-              {result.r2_score !== null && (
+              {result.total_records !== undefined && (
+                <StatCard
+                  title="Records processed"
+                  value={result.total_records?.toLocaleString?.() || '0'}
+                  color="cyan"
+                />
+              )}
+              {result.r2_score !== null && result.r2_score !== undefined && (
                 <>
                   <StatCard
                     title="R-squared"
                     value={`${(result.r2_score * 100).toFixed(1)}%`}
                     color="green"
                   />
-                  <StatCard
-                    title="Mean absolute error"
-                    value={`${result.mae.toFixed(4)}`}
-                    color="magenta"
-                    className="hidden lg:flex"
-                  />
+                  {result.mae !== undefined && (
+                    <StatCard
+                      title="Mean absolute error"
+                      value={`${result.mae.toFixed(4)}`}
+                      color="magenta"
+                      className="hidden lg:flex"
+                    />
+                  )}
                 </>
               )}
             </div>
@@ -239,24 +243,30 @@ const BatchProcess = () => {
                 <CheckCircle2 className="w-14 h-14 text-emerald-400 mb-4" aria-hidden />
                 <h3 className="text-xl font-semibold text-white mb-2">Pipeline complete</h3>
                 <p className="text-zinc-400 max-w-md leading-relaxed">
-                  Generated predictions for {result.total_records} rows. No target labels were found, so validation charts are hidden.
+                  Generated predictions for {result.total_records || '?'} rows. No target labels were found, so validation charts are hidden.
                 </p>
                 <div className="mt-8 border border-white/10 rounded-xl overflow-hidden w-full max-w-md text-left">
                   <div className="bg-white/5 px-4 py-2 text-xs font-mono text-zinc-500 border-b border-white/10 flex">
                     <div className="w-12">Hour</div>
                     <div className="flex-grow text-right">Predicted (kW)</div>
                   </div>
-                  {result.predictions.slice(0, 5).map((p, i) => (
-                    <div
-                      key={i}
-                      className="px-4 py-2 text-sm font-mono flex border-b border-white/5 last:border-0 hover:bg-white/5"
-                    >
-                      <div className="w-12 text-zinc-500">{result.hours[i]}</div>
-                      <div className="flex-grow text-right text-cyan-300 font-semibold tabular-nums">{p.toFixed(4)}</div>
+                  {result.predictions && result.hours ? (
+                    result.predictions.slice(0, 5).map((p, i) => (
+                      <div
+                        key={i}
+                        className="px-4 py-2 text-sm font-mono flex border-b border-white/5 last:border-0 hover:bg-white/5"
+                      >
+                        <div className="w-12 text-zinc-500">{result.hours[i] || i}</div>
+                        <div className="flex-grow text-right text-cyan-300 font-semibold tabular-nums">{p?.toFixed?.(4) || 'N/A'}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-2 text-sm text-center text-zinc-500">
+                      No prediction data available
                     </div>
-                  ))}
+                  )}
                   <div className="px-4 py-2 text-xs text-center text-zinc-500 bg-white/5">
-                    Showing 5 of {result.total_records}
+                    Showing {Math.min(result.predictions?.length || 0, 5)} of {result.total_records || '?'}
                   </div>
                 </div>
               </GlassCard>

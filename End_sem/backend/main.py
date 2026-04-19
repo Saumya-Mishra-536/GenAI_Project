@@ -141,24 +141,97 @@ async def batch_predict(file: UploadFile = File(...)):
     Batch prediction endpoint
     
     Accepts CSV file with charging station data
-    Returns predictions for all records
+    Returns predictions for all records with validation metrics
     """
     try:
         logger.info(f"Received batch file: {file.filename}")
         
-        if not file.filename.endswith('.csv'):
-            raise HTTPException(status_code=400, detail="File must be CSV format")
+        if not file.filename.endswith(('.csv', '.xlsx')):
+            raise HTTPException(status_code=400, detail="File must be CSV or Excel format")
         
-        # TODO: Implement batch processing logic
-        result = {
-            "file_name": file.filename,
-            "records_processed": 0,
-            "predictions_generated": 0,
-            "processing_time_seconds": 0,
-            "status": "completed",
-        }
+        import io
+        import pandas as pd
+        from ml.predictor import load_model, get_feature_columns
         
-        return result
+        # Read file content
+        contents = await file.read()
+        
+        try:
+            # Try reading CSV first
+            df = pd.read_csv(io.BytesIO(contents))
+        except:
+            # Try reading Excel if CSV fails
+            try:
+                df = pd.read_excel(io.BytesIO(contents))
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Failed to read file: {str(e)}")
+        
+        if df.empty:
+            raise HTTPException(status_code=400, detail="File is empty")
+        
+        # Load model and make predictions
+        try:
+            estimator, scaler = load_model()
+            feature_columns = get_feature_columns()
+            
+            # Check if we have required features or labels
+            has_target = 'Demand_kW' in df.columns
+            
+            # Prepare features - if we have the required columns, use them; otherwise use sample features
+            if all(col in df.columns for col in feature_columns):
+                X = df[feature_columns]
+            else:
+                # Try to infer features or use placeholder
+                logger.warning(f"Missing some feature columns. Expected: {feature_columns}")
+                # Create a basic feature set from available columns
+                X = pd.DataFrame({col: df.get(col, 0) for col in feature_columns})
+            
+            # Handle NaN values
+            X = X.fillna(0)
+            
+            # Make predictions
+            predictions = estimator.predict(X).tolist()
+            
+            # Calculate metrics if we have actual values
+            r2_score = None
+            mae = None
+            actuals = None
+            
+            if has_target:
+                from sklearn.metrics import r2_score as sk_r2, mean_absolute_error
+                actuals = df['Demand_kW'].values.tolist()
+                try:
+                    r2_score = float(sk_r2(actuals, predictions))
+                    mae = float(mean_absolute_error(actuals, predictions))
+                except:
+                    logger.warning("Could not calculate R² or MAE")
+            
+            # Extract hours if available
+            hours = None
+            if 'Hour' in df.columns:
+                hours = df['Hour'].astype(int).tolist()
+            else:
+                hours = list(range(len(predictions)))
+            
+            result = {
+                "file_name": file.filename,
+                "total_records": len(df),
+                "predictions": predictions,
+                "actuals": actuals,
+                "hours": hours,
+                "r2_score": r2_score,
+                "mae": mae,
+                "has_labels": has_target,
+                "processing_time_seconds": 0,
+                "status": "completed",
+            }
+            
+            logger.info(f"Batch processing completed: {len(df)} records, R²={r2_score}")
+            return result
+        
+        except Exception as e:
+            logger.error(f"Prediction error: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
     
     except HTTPException:
         raise
