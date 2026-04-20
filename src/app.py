@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 from io import BytesIO
+from pathlib import Path
 from utils import apply_terminal_theme, print_terminal_log
 
 st.set_page_config(page_title="NEURAL GRID | EV FORECAST", layout="wide")
@@ -12,9 +13,24 @@ apply_terminal_theme()
 @st.cache_resource
 def load_model():
     try:
-        # Load the model from the current directory
-        return joblib.load('models/ev_demand_timeseries.pkl')
-    except Exception:
+        # Try multiple possible paths for the model file
+        possible_paths = [
+            'models/ev_demand_timeseries.pkl',
+            'src/models/ev_demand_timeseries.pkl',
+            Path(__file__).parent / 'models' / 'ev_demand_timeseries.pkl',
+        ]
+        
+        for path in possible_paths:
+            model_path = Path(path)
+            if model_path.exists():
+                print(f"✓ Loading model from: {model_path}")
+                return joblib.load(model_path)
+        
+        # If no model found, show warning
+        st.warning("⚠️ Model file not found. Manual prediction available, but batch processing will be limited.")
+        return None
+    except Exception as e:
+        st.error(f"Model Loading Error: {str(e)}")
         return None
 
 predictor = load_model()
@@ -44,7 +60,8 @@ def preprocess_data(df_raw):
             'Number of EVs Charging': 'Number of EVs Charging'
         }
         
-        df = df.fillna(method='bfill').fillna(method='ffill')
+        # Use bfill() and ffill() instead of deprecated method parameter
+        df = df.bfill().ffill()
         return df
     except Exception as e:
         st.error(f"Processing Error: {str(e)}")
