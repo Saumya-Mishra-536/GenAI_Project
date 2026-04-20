@@ -31,6 +31,10 @@ def apply_terminal_theme():
             animation: pulse-glow 3s infinite;
         }
 
+        .stButton>button:hover {
+            background-color: rgba(0, 242, 255, 0.1) !important;
+        }
+
         /* Terminal Logging */
         .terminal-text {
             color: #00ff41;
@@ -49,13 +53,30 @@ def apply_terminal_theme():
             border: 1px solid #1f1f1f;
         }
 
-        div[data-testid="stFileUploader"] {
-            border: 1px dashed #00f2ff;
-            background-color: #0a0a0a;
-            padding: 15px;
+        /* Tab styling */
+        .stTabs [data-baseweb="tab-list"] button {
+            color: #00f2ff;
+        }
+
+        .stTabs [data-baseweb="tab-list"] button[aria-selected="true"] {
+            border-bottom-color: #00f2ff;
+        }
+
+        /* Expander styling */
+        .streamlit-expanderContent {
+            border: 1px solid #00f2ff;
+            border-radius: 4px;
+        }
+
+        /* File uploader */
+        .uploadedFile {
+            border: 1px solid #00f2ff;
         }
         </style>
-        """, unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-def print_terminal_log(message):
-    st.markdown(f'<p class="terminal-text">[SYSTEM]: {message}</p>', unsafe_allow_html=True)
+def print_terminal_log(message: str):
+    """
+    Display a terminal-style log message.
+    """
+    st.markdown(f'<p class="terminal-text">▹ {message}</p>', unsafe_allow_html=True)
