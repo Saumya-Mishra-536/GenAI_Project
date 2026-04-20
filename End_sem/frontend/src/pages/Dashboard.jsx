@@ -176,10 +176,10 @@ const Dashboard = () => {
           <Logo size="md" className="shrink-0" />
           <div className="min-w-0">
             <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-white">
-              Operations overview
+              Operations Overview
             </h1>
             <p className="text-zinc-400 mt-2 max-w-2xl leading-relaxed">
-              Model health, demand shape, and correlation signals from your latest processed dataset.
+              Model health, demand shape, and correlation signals from your latest dataset processing.
             </p>
           </div>
         </div>
@@ -192,24 +192,24 @@ const Dashboard = () => {
             to="/predict"
             className="inline-flex items-center gap-1.5 rounded-full border border-white/10 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-white/5 transition-colors"
           >
-            Predict
+            Inference
             <ArrowRight className="h-3.5 w-3.5" aria-hidden />
           </Link>
         </div>
       </div>
 
-      <GlassCard title="Data pipeline" icon={Activity} className="bg-zinc-950/40 border-cyan-500/15">
+      <GlassCard title="Data Pipeline" icon={Activity} className="bg-zinc-950/40 border-cyan-500/15">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <p className="text-sm text-zinc-400">
-              Supported formats: CSV, JSON, Parquet. Batch limit 2GB. Ingest runs feature extraction before inference.
+              Upload station files in CSV, JSON, or Parquet format. Batch processing runs feature extraction and model inference automatically.
             </p>
           </div>
           <Link
             to="/batch"
             className="inline-flex items-center justify-center gap-2 rounded-lg border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-sm font-medium text-cyan-300 hover:bg-cyan-500/20 transition-colors shrink-0"
           >
-            Open ingest
+            Go to ingest
             <ArrowRight className="h-4 w-4" aria-hidden />
           </Link>
         </div>
@@ -218,7 +218,7 @@ const Dashboard = () => {
       <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <StaggerItem>
           <StatCard
-            title="Avg base demand"
+            title="Average Base Demand"
             value={`${summary.avg_demand.toFixed(3)} kW`}
             icon={Activity}
             color="cyan"
@@ -226,7 +226,7 @@ const Dashboard = () => {
         </StaggerItem>
         <StaggerItem>
           <StatCard
-            title="Peak observed load"
+            title="Peak Observed Load"
             value={`${summary.max_demand.toFixed(3)} kW`}
             icon={Zap}
             color="magenta"
@@ -234,16 +234,16 @@ const Dashboard = () => {
         </StaggerItem>
         <StaggerItem>
           <StatCard
-            title="Active model"
+            title="Active Model"
             value="Ensemble"
             icon={TrendingUp}
             color="green"
-            subtitle="HGB + gradient boosting"
+            subtitle="HGB + Gradient Boosting"
           />
         </StaggerItem>
         <StaggerItem>
           <StatCard
-            title="Grid stress"
+            title="Grid Stress"
             value={summary.max_demand > 0.4 ? 'Elevated' : 'Nominal'}
             icon={AlertTriangle}
             color={summary.max_demand > 0.4 ? 'orange' : 'cyan'}
@@ -252,7 +252,7 @@ const Dashboard = () => {
       </Stagger>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <GlassCard title="Average daily load profile" className="lg:col-span-2 min-h-[380px]">
+        <GlassCard title="Average Daily Load Profile" className="lg:col-span-2 min-h-[380px]">
           <div className="h-full w-full min-h-[300px]">
             {hourly_demand && hourly_demand.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
@@ -281,7 +281,7 @@ const Dashboard = () => {
           </div>
         </GlassCard>
 
-        <GlassCard title="Model health radar" className="min-h-[380px]">
+        <GlassCard title="Model Health Radar" className="min-h-[380px]">
           {radarModelHealth.length > 0 ? (
             <ResponsiveContainer width="100%" height={300}>
               <RadarChart data={radarModelHealth} cx="50%" cy="50%" outerRadius="75%">
@@ -307,7 +307,7 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <GlassCard title="Top hours by demand" className="min-h-[320px]">
+        <GlassCard title="Top Hours by Demand" className="min-h-[320px]">
           {peakHourBars.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={peakHourBars} layout="vertical" margin={{ left: 8, right: 16 }}>
@@ -323,7 +323,7 @@ const Dashboard = () => {
           )}
         </GlassCard>
 
-        <GlassCard title="Weekly load share" className="min-h-[320px]">
+        <GlassCard title="Weekly Load Share" className="min-h-[320px]">
           {pieWeekShare.length > 0 ? (
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
@@ -353,7 +353,7 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <GlassCard title="Day-of-week pattern" className="min-h-[320px]">
+        <GlassCard title="Day-of-Week Pattern" className="min-h-[320px]">
           {day_of_week && day_of_week.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={day_of_week}>
@@ -374,7 +374,7 @@ const Dashboard = () => {
           ) : null}
         </GlassCard>
 
-        <GlassCard title="Price vs demand" className="col-span-1 lg:col-span-2 min-h-[320px]">
+        <GlassCard title="Price vs Demand" className="col-span-1 lg:col-span-2 min-h-[320px]">
           {price_vs_demand && price_vs_demand.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
               <ScatterChart margin={{ top: 12, right: 12, bottom: 12, left: 12 }}>
@@ -392,7 +392,7 @@ const Dashboard = () => {
         </GlassCard>
       </div>
 
-      <GlassCard title="Pipeline status" className="bg-zinc-950/30 border-cyan-500/15">
+      <GlassCard title="Pipeline Status" className="bg-zinc-950/30 border-cyan-500/15">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/25 text-center">
             <p className="text-cyan-300 font-semibold text-2xl tabular-nums">

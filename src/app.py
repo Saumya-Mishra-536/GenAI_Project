@@ -43,7 +43,7 @@ def load_model():
             if model_path.exists():
                 return joblib.load(model_path)
         
-        st.warning("⚠️ Model file not found.")
+        st.warning("Warning: Model file not found.")
         return None
     except Exception as e:
         st.error(f"Model Loading Error: {str(e)}")
@@ -55,7 +55,7 @@ def load_agent():
         from agent.run_agent import run_planning_agent
         return run_planning_agent
     except Exception as e:
-        st.warning(f"⚠️ Agent system not available: {str(e)}")
+        st.warning(f"Warning: Agent system not available: {str(e)}")
         return None
 
 predictor = load_model()
@@ -96,7 +96,7 @@ def run_agent_workflow(processed_df):
         return None
     
     try:
-        with st.spinner("🤖 Running agent planning pipeline..."):
+        with st.spinner("Running agent planning pipeline..."):
             result = agent_runner(processed_df)
             return result
     except Exception as e:
@@ -107,16 +107,16 @@ def run_agent_workflow(processed_df):
 # UI Components
 # ==========================================
 
-st.title("🔮 NEURAL GRID: EV DEMAND FORECASTING")
+st.title("NEURAL GRID: EV DEMAND FORECASTING")
 st.markdown("*Intelligent forecasting and infrastructure planning for EV charging networks*")
 st.markdown("---")
 
 # Create tabs
 tab1, tab2, tab3, tab4 = st.tabs([
-    "🎯 Manual Prediction",
-    "📊 Batch Analysis",
-    "🤖 Agent Planning",
-    "📈 Dashboard"
+    "Manual Prediction",
+    "Batch Analysis",
+    "Agent Planning",
+    "Dashboard"
 ])
 
 # ==========================================
@@ -137,13 +137,13 @@ with tab1:
         stb = st.number_input("Stability Index", value=1.0000, format="%.4f")
         evc = st.number_input("EV Count", value=5)
 
-        if st.button("▶️ RUN INFERENCE", key="inference_btn"):
+        if st.button("RUN INFERENCE", key="inference_btn"):
             if predictor:
                 features = [h, d, l1, l2, r3, pr, stb, evc]
                 prediction = predictor.predict([features])[0]
                 st.metric("PREDICTED LOAD", f"{prediction:.4f} kW", delta=f"{prediction*1000:.0f} W")
             else:
-                st.error("❌ Model Error: Model file not found.")
+                st.error("Error: Model file not found.")
 
     with col_viz:
         st.subheader("Load Profile")
@@ -379,7 +379,7 @@ with tab3:
 # ==========================================
 
 with tab4:
-    st.subheader("📈 Analytics Dashboard")
+    st.subheader("Analytics Dashboard")
     st.write("Real-time monitoring and analytics for EV charging infrastructure")
     
     # Synthetic data for demo
