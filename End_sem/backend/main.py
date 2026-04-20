@@ -591,20 +591,10 @@ async def shutdown_event():
 
 
 # ──────────────────────────────────────
-# Entry Point
+# Entry Point (Use 'uvicorn main:app' for production)
 # ──────────────────────────────────────
-
-if __name__ == "__main__":
-    import uvicorn
-    
-    port = int(os.getenv("PORT", 8000))
-    host = os.getenv("HOST", "0.0.0.0")
-    
-    logger.info(f"Starting server on {host}:{port}")
-    
-    uvicorn.run(
-        app,
-        host=host,
-        port=port,
-        log_level="info",
-    )
+# This module is designed to be run via uvicorn from the command line:
+#   uvicorn main:app --host 0.0.0.0 --port 8000
+# 
+# For Render deployment, the Procfile handles startup with:
+#   web: cd End_sem/backend && uvicorn main:app --host 0.0.0.0 --port $PORT
